@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proven Media | Klantdashboard</title>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #0f0f0f; color: white; margin: 0; }
+    .container { max-width: 800px; margin: 40px auto; padding: 20px; }
+    .card { background: #1a1a1a; padding: 25px; border-radius: 10px; margin-bottom: 25px; }
+    input, button { width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 8px; }
+    button { background: #00c2ff; color: white; font-weight: bold; cursor: pointer; }
+    a { color: #00c2ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="container">
+    <h2>Inloggen</h2>
+    <input id="email" placeholder="E-mail">
+    <input id="password" placeholder="Wachtwoord" type="password">
+    <button id="loginBtn">Login</button>
+    <p id="error" style="color:red;"></p>
+  </div>
+
+  <div id="dashboard" class="container" style="display:none;">
+    <h2>Welkom <span id="clientName"></span></h2>
+    <div id="filesSection" class="card">
+      <h3>📂 Jouw bestanden</h3>
+      <ul id="filesList"></ul>
+    </div>
+    <button id="logoutBtn" style="background:#e74c3c;">Uitloggen</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzc_xwZkTDI-R4X0VIHFLqnl1bf7LvrMc",
+      authDomain: "provenmedia-portal.firebaseapp.com",
+      projectId: "provenmedia-portal",
+      storageBucket: "provenmedia-portal.appspot.com",
+      messagingSenderId: "476187799609",
+      appId: "1:476187799609:web:fec193460d21ae4cb49de8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const loginScreen = document.getElementById("loginScreen");
+    const dashboard = document.getElementById("dashboard");
+    const filesList = document.getElementById("filesList");
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginScreen.style.display = "none";
+        dashboard.style.display = "block";
+        document.getElementById("clientName").textContent = email;
+        loadFiles(email);
+      } catch {
+        document.getElementById("error").textContent = "Ongeldige inloggegevens.";
+      }
+    });
+
+    async function loadFiles(email) {
+      const snap = await getDocs(collection(db, "files"));
+      filesList.innerHTML = "";
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d.email === email) {
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${d.url}" target="_blank">${d.fileName}</a> - ${d.uploaded}`;
+          filesList.appendChild(li);
+        }
+      });
+      if (!filesList.innerHTML) filesList.innerHTML = "<li>Geen bestanden beschikbaar.</li>";
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      dashboard.style.display = "none";
+      loginScreen.style.display = "block";
+    });
+  </script>
+</body>
+</html>
