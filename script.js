@@ -1,16 +1,16 @@
 // ---------------- Firebase Imports ----------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signOut 
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  query, 
-  where 
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------------- Firebase Config ----------------
@@ -29,28 +29,37 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ---------------- DOM Elements ----------------
-const loginDiv = document.getElementById('login');
-const dashboardDiv = document.getElementById('dashboard');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const emailInput = document.getElementById('email');
-const passInput = document.getElementById('password');
-const projectList = document.getElementById('projectList');
-const errorP = document.getElementById('error');
-const userEmail = document.getElementById('userEmail');
+const loginDiv = document.getElementById("login");
+const dashboardDiv = document.getElementById("dashboard");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
+const projectList = document.getElementById("projectList");
+const errorP = document.getElementById("error");
+const userEmail = document.getElementById("userEmail");
 
 // ---------------- Chart.js Setup ----------------
 let statusChart;
 
+// Veilige Chart-functie (met check of canvas bestaat)
 function updateChart(dataCounts) {
-  const ctx = document.getElementById('statusChart').getContext('2d');
+  const canvas = document.getElementById("statusChart");
+  if (!canvas) {
+    console.warn("Chart canvas not found — skipping chart render.");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   const chartData = {
     labels: Object.keys(dataCounts),
-    datasets: [{
-      data: Object.values(dataCounts),
-      backgroundColor: ['#00c2ff', '#27ae60', '#f39c12', '#e74c3c'],
-    }]
+    datasets: [
+      {
+        data: Object.values(dataCounts),
+        backgroundColor: ["#00c2ff", "#27ae60", "#f39c12", "#e74c3c"]
+      }
+    ]
   };
 
   if (statusChart) {
@@ -58,12 +67,14 @@ function updateChart(dataCounts) {
   }
 
   statusChart = new Chart(ctx, {
-    type: 'doughnut',
+    type: "doughnut",
     data: chartData,
     options: {
       plugins: {
         legend: {
-          labels: { color: document.body.classList.contains('light') ? '#111' : '#fff' }
+          labels: {
+            color: document.body.classList.contains("light") ? "#111" : "#fff"
+          }
         }
       }
     }
@@ -71,7 +82,7 @@ function updateChart(dataCounts) {
 }
 
 // ---------------- Login Function ----------------
-loginBtn?.addEventListener('click', async () => {
+loginBtn?.addEventListener("click", async () => {
   const email = emailInput.value.trim().toLowerCase();
   const password = passInput.value.trim();
 
@@ -85,11 +96,9 @@ loginBtn?.addEventListener('click', async () => {
     const user = userCredential.user;
     userEmail.textContent = user.email;
 
-    // UI switch
-    loginDiv.style.display = 'none';
-    dashboardDiv.style.display = 'block';
+    loginDiv.style.display = "none";
+    dashboardDiv.style.display = "block";
 
-    // Projecten laden
     await loadProjects(user.email);
   } catch (err) {
     errorP.textContent = "Fout bij inloggen: " + err.message;
@@ -97,16 +106,16 @@ loginBtn?.addEventListener('click', async () => {
 });
 
 // ---------------- Logout Function ----------------
-logoutBtn?.addEventListener('click', async () => {
+logoutBtn?.addEventListener("click", async () => {
   await signOut(auth);
-  loginDiv.style.display = 'block';
-  dashboardDiv.style.display = 'none';
+  loginDiv.style.display = "block";
+  dashboardDiv.style.display = "none";
   emailInput.value = "";
   passInput.value = "";
   projectList.innerHTML = "";
 });
 
-// ---------------- Load Projects Function ----------------
+// ---------------- Load Projects ----------------
 async function loadProjects(userEmailAddress) {
   projectList.innerHTML = "<p>Projecten laden...</p>";
 
@@ -117,31 +126,39 @@ async function loadProjects(userEmailAddress) {
     projectList.innerHTML = "";
     if (querySnapshot.empty) {
       projectList.innerHTML = "<p>Er zijn nog geen projecten gekoppeld aan jouw account.</p>";
+      updateChart({});
       return;
     }
 
-    // Status telling voor de Chart
     const statusCounts = {};
+    let completed = 0;
+    let total = 0;
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-
-      // Voeg status toe aan teller
       const status = data.status || "Onbekend";
       statusCounts[status] = (statusCounts[status] || 0) + 1;
 
-      const card = document.createElement('div');
-      card.classList.add('card');
+      if (status.toLowerCase() === "afgerond") completed++;
+      total++;
+
+      const progressPercent = status.toLowerCase() === "afgerond" ? 100 : Math.floor(Math.random() * 80) + 10;
+
+      const card = document.createElement("div");
+      card.classList.add("card");
       card.innerHTML = `
         <h3 style="color:#00c2ff;">${data.name || "Naam onbekend"}</h3>
         <p><strong>Service:</strong> ${data.service || "Niet ingevuld"}</p>
         <p><strong>Status:</strong> ${data.status || "Onbekend"}</p>
         <p><strong>Deadline:</strong> ${data.deadline || "Geen deadline ingesteld"}</p>
+        <div style="background:#222;border-radius:10px;height:10px;width:100%;margin-top:10px;">
+          <div style="height:10px;width:${progressPercent}%;background:#00c2ff;border-radius:10px;"></div>
+        </div>
+        <p style="font-size:13px;color:gray;">Voortgang: ${progressPercent}%</p>
       `;
       projectList.appendChild(card);
     });
 
-    // Update Chart
     updateChart(statusCounts);
 
   } catch (error) {
@@ -150,10 +167,14 @@ async function loadProjects(userEmailAddress) {
 }
 
 // ---------------- Theme Toggle ----------------
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-  document.body.classList.toggle('light');
+document.getElementById("themeToggle")?.addEventListener("click", () => {
+  document.body.classList.toggle("light");
   if (statusChart) {
-    // Update de tekstkleur in de grafiek
     updateChart(statusChart.data.datasets[0].data);
   }
+});
+
+// ---------------- DOM Loaded Log ----------------
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Dashboard scripts loaded ✅");
 });
