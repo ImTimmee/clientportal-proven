@@ -39,8 +39,39 @@ const projectList = document.getElementById('projectList');
 const errorP = document.getElementById('error');
 const userEmail = document.getElementById('userEmail');
 
+// ---------------- Chart.js Setup ----------------
+let statusChart;
+
+function updateChart(dataCounts) {
+  const ctx = document.getElementById('statusChart').getContext('2d');
+
+  const chartData = {
+    labels: Object.keys(dataCounts),
+    datasets: [{
+      data: Object.values(dataCounts),
+      backgroundColor: ['#00c2ff', '#27ae60', '#f39c12', '#e74c3c'],
+    }]
+  };
+
+  if (statusChart) {
+    statusChart.destroy(); // voorkom dubbele grafieken
+  }
+
+  statusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: chartData,
+    options: {
+      plugins: {
+        legend: {
+          labels: { color: document.body.classList.contains('light') ? '#111' : '#fff' }
+        }
+      }
+    }
+  });
+}
+
 // ---------------- Login Function ----------------
-loginBtn.addEventListener('click', async () => {
+loginBtn?.addEventListener('click', async () => {
   const email = emailInput.value.trim().toLowerCase();
   const password = passInput.value.trim();
 
@@ -66,7 +97,7 @@ loginBtn.addEventListener('click', async () => {
 });
 
 // ---------------- Logout Function ----------------
-logoutBtn.addEventListener('click', async () => {
+logoutBtn?.addEventListener('click', async () => {
   await signOut(auth);
   loginDiv.style.display = 'block';
   dashboardDiv.style.display = 'none';
@@ -89,22 +120,40 @@ async function loadProjects(userEmailAddress) {
       return;
     }
 
+    // Status telling voor de Chart
+    const statusCounts = {};
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log("Document data:", data); // Debugging
+
+      // Voeg status toe aan teller
+      const status = data.status || "Onbekend";
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
 
       const card = document.createElement('div');
+      card.classList.add('card');
       card.innerHTML = `
-        <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
-          <h3 style="color:#00c2ff;">${data.name || "Naam onbekend"}</h3>
-          <p><strong>Service:</strong> ${data.service || "Niet ingevuld"}</p>
-          <p><strong>Status:</strong> ${data.status || "Onbekend"}</p>
-          <p><strong>Deadline:</strong> ${data.deadline || "Geen deadline ingesteld"}</p>
-        </div>
+        <h3 style="color:#00c2ff;">${data.name || "Naam onbekend"}</h3>
+        <p><strong>Service:</strong> ${data.service || "Niet ingevuld"}</p>
+        <p><strong>Status:</strong> ${data.status || "Onbekend"}</p>
+        <p><strong>Deadline:</strong> ${data.deadline || "Geen deadline ingesteld"}</p>
       `;
       projectList.appendChild(card);
     });
+
+    // Update Chart
+    updateChart(statusCounts);
+
   } catch (error) {
     projectList.innerHTML = `<p>Fout bij laden: ${error.message}</p>`;
   }
 }
+
+// ---------------- Theme Toggle ----------------
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  if (statusChart) {
+    // Update de tekstkleur in de grafiek
+    updateChart(statusChart.data.datasets[0].data);
+  }
+});
