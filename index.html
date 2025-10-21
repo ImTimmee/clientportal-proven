@@ -1,26 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proven Media Client Portal</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Klantenportaal</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: url('background.png') no-repeat center center/cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+
+    section {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 40px 60px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    a.button {
+      display: inline-block;
+      background-color: #007BFF;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 18px;
+      transition: background-color 0.3s ease;
+    }
+
+    a.button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <div id="login">
-    <h2>Proven Media Client Portal</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <p id="error"></p>
-  </div>
-
-  <div id="dashboard" style="display:none;">
-    <h2>Welcome, <span id="userEmail"></span></h2>
-    <button id="logoutBtn">Logout</button>
-    <div id="projectList"></div>
-  </div>
-
-  <script type="module" src="script.js"></script>
+  <section>
+    <a href="client.html" class="button">Ga naar klantenportaal</a>
+  </section>
 </body>
 </html>
