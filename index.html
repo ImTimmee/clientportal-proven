@@ -3,24 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proven Media Portal</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Proven Media Klantenportaal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
+  <style>
+    :root {
+      --bg-dark: #0f0f0f;
+      --bg-light: #f8f8f8;
+      --text-dark: #fff;
+      --text-light: #111;
+      --accent: #00c2ff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-dark);
+      display: flex;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    body.light {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: #111;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      position: fixed;
+    }
+
+    .sidebar h1 {
+      text-align: center;
+      font-size: 20px;
+      color: var(--accent);
+      margin-bottom: 40px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .toggle-theme {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .logout {
+      background: #e74c3c;
+      color: white;
+    }
+
+    /* Main */
+    .main {
+      margin-left: 260px;
+      flex: 1;
+      padding: 30px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .top-bar h2 {
+      color: var(--accent);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #1b1b1b;
+      border-radius: 10px;
+      padding: 20px;
+      transition: all 0.3s;
+    }
+
+    body.light .card {
+      background: #fff;
+      color: #111;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    form input, form textarea, form button {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    form input, form textarea {
+      background: #222;
+      color: white;
+    }
+
+    form button {
+      background: var(--accent);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 250px !important;
+    }
+
+    .slider {
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+      }
+      .main {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div id="login">
-    <h2>Proven Media Client Portal</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Wachtwoord">
-    <button id="loginBtn">Login</button>
-    <p id="error"></p>
+  <div class="sidebar">
+    <div>
+      <h1>PROVEN MEDIA</h1>
+    </div>
+    <div>
+      <button class="toggle-theme" id="themeToggle">Licht / Donker</button>
+      <button class="logout" id="logoutBtn">Uitloggen</button>
+    </div>
   </div>
 
-  <div id="dashboard" style="display:none;">
-    <h2>Welkom, <span id="userEmail"></span></h2>
-    <button id="logoutBtn">Uitloggen</button>
-    <div id="projectList"></div>
+  <div class="main">
+    <div class="top-bar">
+      <h2>Welkom, <span id="userEmail"></span></h2>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Statusoverzicht</h3>
+        <canvas id="statusChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Deadline Voortgang</h3>
+        <input type="range" min="0" max="100" value="50" class="slider">
+        <p>Projectvoortgang: <span id="progressValue">50%</span></p>
+      </div>
+
+      <div class="card">
+        <h3>Klantenservice</h3>
+        <form action="https://formspree.io/f/xpwyeeoe" method="POST">
+          <input type="text" name="name" placeholder="Naam" required>
+          <input type="email" name="email" placeholder="E-mailadres" required>
+          <textarea name="message" placeholder="Hoe kunnen we helpen?" rows="4" required></textarea>
+          <button type="submit">Verstuur Bericht</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="projectList" style="margin-top: 40px;"></div>
   </div>
 
   <script type="module" src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Chart.js demo chart (kan straks data-driven worden)
+    const ctx = document.getElementById('statusChart');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['In progress', 'Afgerond', 'Wachten'],
+        datasets: [{
+          data: [60, 30, 10],
+          backgroundColor: ['#00c2ff', '#27ae60', '#f39c12'],
+        }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: 'white' } } }
+      }
+    });
+
+    // Slider update
+    const slider = document.querySelector('.slider');
+    const progressValue = document.getElementById('progressValue');
+    slider.addEventListener('input', () => {
+      progressValue.textContent = slider.value + '%';
+    });
+
+    // Theme toggle
+    const toggle = document.getElementById('themeToggle');
+    toggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+  </script>
 </body>
 </html>
