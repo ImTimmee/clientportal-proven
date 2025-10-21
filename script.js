@@ -1,7 +1,17 @@
-// ---- Import Firebase modules ----
+// ---- Firebase imports ----
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  query, 
+  where 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---- Firebase config ----
 const firebaseConfig = {
@@ -31,14 +41,25 @@ const userEmail = document.getElementById('userEmail');
 
 // ---- Login ----
 loginBtn.addEventListener('click', async () => {
-  const email = emailInput.value;
-  const password = passInput.value;
+  const email = emailInput.value.trim();
+  const password = passInput.value.trim();
+
+  if (!email || !password) {
+    errorP.textContent = "Vul je e-mailadres en wachtwoord in.";
+    return;
+  }
+
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    userEmail.textContent = userCredential.user.email;
+    const user = userCredential.user;
+    userEmail.textContent = user.email;
+
+    // UI update
     loginDiv.style.display = 'none';
     dashboardDiv.style.display = 'block';
-    loadProjects();
+
+    // Laad projecten
+    await loadProjects(user.email);
   } catch (err) {
     errorP.textContent = "Fout bij inloggen: " + err.message;
   }
@@ -51,23 +72,32 @@ logoutBtn.addEventListener('click', async () => {
   dashboardDiv.style.display = 'none';
   emailInput.value = "";
   passInput.value = "";
+  projectList.innerHTML = "";
 });
 
-// ---- Load Firestore data ----
-async function loadProjects() {
+// ---- Load projects for logged-in user ----
+async function loadProjects(userEmailAddress) {
   projectList.innerHTML = "<p>Projecten laden...</p>";
+
   try {
-    const querySnapshot = await getDocs(collection(db, "clients"));
+    const q = query(collection(db, "clients"), where("email", "==", userEmailAddress));
+    const querySnapshot = await getDocs(q);
+
     projectList.innerHTML = "";
+    if (querySnapshot.empty) {
+      projectList.innerHTML = "<p>Er zijn nog geen projecten gekoppeld aan jouw account.</p>";
+      return;
+    }
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       const card = document.createElement('div');
       card.innerHTML = `
-        <div style="background:#111;padding:15px;margin:10px;border-radius:10px;">
-          <h3>${data.name}</h3>
-          <p>Status: ${data.status}</p>
-          <p>Deadline: ${data.deadline}</p>
-          <p>${data.notes}</p>
+        <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
+          <h3 style="color:#00c2ff;">${data.Name}</h3>
+          <p><strong>Service:</strong> ${data.Service}</p>
+          <p><strong>Status:</strong> ${data.Status}</p>
+          <p><strong>Deadline:</strong> ${data.Deadline}</p>
         </div>
       `;
       projectList.appendChild(card);
