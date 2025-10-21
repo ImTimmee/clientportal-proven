@@ -1,4 +1,4 @@
-// ---- Firebase imports ----
+// ---------------- Firebase Imports ----------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
   getAuth, 
@@ -13,7 +13,7 @@ import {
   where 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ---- Firebase config ----
+// ---------------- Firebase Config ----------------
 const firebaseConfig = {
   apiKey: "AIzaSyAzc_xwZkTDI-R4X0VIHFLqnl1bf7LvrMc",
   authDomain: "provenmedia-portal.firebaseapp.com",
@@ -23,12 +23,12 @@ const firebaseConfig = {
   appId: "1:476187799609:web:fec193460d21ae4cb49de8"
 };
 
-// ---- Initialize Firebase ----
+// ---------------- Initialize Firebase ----------------
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ---- Elements ----
+// ---------------- DOM Elements ----------------
 const loginDiv = document.getElementById('login');
 const dashboardDiv = document.getElementById('dashboard');
 const loginBtn = document.getElementById('loginBtn');
@@ -39,9 +39,9 @@ const projectList = document.getElementById('projectList');
 const errorP = document.getElementById('error');
 const userEmail = document.getElementById('userEmail');
 
-// ---- Login ----
+// ---------------- Login Function ----------------
 loginBtn.addEventListener('click', async () => {
-  const email = emailInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
   const password = passInput.value.trim();
 
   if (!email || !password) {
@@ -54,18 +54,18 @@ loginBtn.addEventListener('click', async () => {
     const user = userCredential.user;
     userEmail.textContent = user.email;
 
-    // UI update
+    // UI switch
     loginDiv.style.display = 'none';
     dashboardDiv.style.display = 'block';
 
-    // Laad projecten
+    // Projecten laden
     await loadProjects(user.email);
   } catch (err) {
     errorP.textContent = "Fout bij inloggen: " + err.message;
   }
 });
 
-// ---- Logout ----
+// ---------------- Logout Function ----------------
 logoutBtn.addEventListener('click', async () => {
   await signOut(auth);
   loginDiv.style.display = 'block';
@@ -75,7 +75,7 @@ logoutBtn.addEventListener('click', async () => {
   projectList.innerHTML = "";
 });
 
-// ---- Load projects for logged-in user ----
+// ---------------- Load Projects Function ----------------
 async function loadProjects(userEmailAddress) {
   projectList.innerHTML = "<p>Projecten laden...</p>";
 
@@ -90,17 +90,21 @@ async function loadProjects(userEmailAddress) {
     }
 
     querySnapshot.forEach((doc) => {
-  const data = doc.data();
-  const card = document.createElement('div');
-  card.innerHTML = `
-    <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
-      <h3 style="color:#00c2ff;">${data.name}</h3>
-      <p><strong>Service:</strong> ${data.service}</p>
-      <p><strong>Status:</strong> ${data.status}</p>
-      <p><strong>Deadline:</strong> ${data.deadline}</p>
-    </div>
-  `;
-  projectList.appendChild(card);
-});
+      const data = doc.data();
+      console.log("Document data:", data); // Debugging
 
-
+      const card = document.createElement('div');
+      card.innerHTML = `
+        <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
+          <h3 style="color:#00c2ff;">${data.name || "Naam onbekend"}</h3>
+          <p><strong>Service:</strong> ${data.service || "Niet ingevuld"}</p>
+          <p><strong>Status:</strong> ${data.status || "Onbekend"}</p>
+          <p><strong>Deadline:</strong> ${data.deadline || "Geen deadline ingesteld"}</p>
+        </div>
+      `;
+      projectList.appendChild(card);
+    });
+  } catch (error) {
+    projectList.innerHTML = `<p>Fout bij laden: ${error.message}</p>`;
+  }
+}
