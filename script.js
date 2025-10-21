@@ -90,19 +90,17 @@ async function loadProjects(userEmailAddress) {
     }
 
     querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const card = document.createElement('div');
-      card.innerHTML = `
-        <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
-          <h3 style="color:#00c2ff;">${data.Name}</h3>
-          <p><strong>Service:</strong> ${data.Service}</p>
-          <p><strong>Status:</strong> ${data.Status}</p>
-          <p><strong>Deadline:</strong> ${data.Deadline}</p>
-        </div>
-      `;
-      projectList.appendChild(card);
-    });
-  } catch (error) {
-    projectList.innerHTML = `<p>Fout bij laden: ${error.message}</p>`;
-  }
-}
+  const data = doc.data();
+  const card = document.createElement('div');
+  card.innerHTML = `
+    <div style="background:#111;padding:15px;margin:10px;border-radius:10px;line-height:1.5;">
+      <h3 style="color:#00c2ff;">${data.name}</h3>
+      <p><strong>Service:</strong> ${data.service}</p>
+      <p><strong>Status:</strong> ${data.status}</p>
+      <p><strong>Deadline:</strong> ${data.deadline}</p>
+    </div>
+  `;
+  projectList.appendChild(card);
+});
+
+
